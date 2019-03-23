@@ -72,7 +72,13 @@ class RPN:
                 self.rawSizes = BoxUtils.mergeBoxData([w_raw, h_raw])
 
                 # Convert NN outputs to BBox coordinates
-                self.boxes = BoxUtils.nnToImageBoxes(x_raw, y_raw, w_raw, h_raw, self.wA, self.hA, self.inputDownscale,
+                self.boxes = BoxUtils.nnToImageBoxes(x_raw,
+                                                     y_raw,
+                                                     w_raw,
+                                                     h_raw,
+                                                     self.wA,
+                                                     self.hA,
+                                                     self.inputDownscale,
                                                      self.offset)
 
                 # store the size of every box

@@ -132,7 +132,7 @@ class CocoDataset:
 
             if len(boxes) == 0:
                 print("Warning: No boxes on image. Skipping.")
-                continue;
+                continue
 
             boxes = np.array(boxes, dtype=np.float32)
             boxes = np.reshape(boxes, [-1, 4])
