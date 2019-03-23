@@ -1,3 +1,4 @@
+CC=gcc
 all:
 	$(MAKE) -C BoxEngine/ROIPooling all
 	$(MAKE) -C Dataset/coco all

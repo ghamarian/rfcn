@@ -21,122 +21,124 @@ import cv2
 import tensorflow as tf
 from . import BoxAwareRandZoom
 
+
 class CocoDataset:
-	def __init__(self, path, set="train2017", normalizeSize=True, randomZoom=True):
-		print(path)
-		self.path=path
-		self.coco=None
-		self.normalizeSize=normalizeSize
-		self.set=set
-		self.randomZoom=randomZoom
+    def __init__(self, path, set="train2017", normalizeSize=True, randomZoom=True):
+        print(path)
+        self.path = path
+        self.coco = None
+        self.normalizeSize = normalizeSize
+        self.set = set
+        self.randomZoom = randomZoom
 
-	def init(self):
-		self.coco=coco.COCO(self.path+"/annotations/instances_"+self.set+".json")
-		self.images=self.coco.getImgIds()
+    def init(self):
+        self.coco = coco.COCO(self.path + "/annotations/instances_" + self.set + ".json")
+        self.images = self.coco.getImgIds()
 
-		self.toCocoCategory=[]
-		self.fromCocoCategory={}
+        self.toCocoCategory = []
+        self.fromCocoCategory = {}
 
-		cats = self.coco.dataset['categories']
-		for i in range(len(cats)):
-			self.fromCocoCategory[cats[i]["id"]] = i
-			self.toCocoCategory.append(cats[i]["id"])
+        cats = self.coco.dataset['categories']
+        for i in range(len(cats)):
+            self.fromCocoCategory[cats[i]["id"]] = i
+            self.toCocoCategory.append(cats[i]["id"])
 
-		print("Loaded "+str(len(self.images))+" COCO images")
-	
-  
-	def getCaptions(self, categories):
-		if categories is None:
-			return None
+        print("Loaded " + str(len(self.images)) + " COCO images")
 
-		res = []
-		if isinstance(categories, np.ndarray):
-			categories = categories.tolist()
+    def getCaptions(self, categories):
+        if categories is None:
+            return None
 
-		for c in categories:
-			res.append(self.coco.cats[self.toCocoCategory[c]]["name"])
+        res = []
+        if isinstance(categories, np.ndarray):
+            categories = categories.tolist()
 
-		return res
+        for c in categories:
+            res.append(self.coco.cats[self.toCocoCategory[c]]["name"])
 
-	def load(self):
-		while True:
-			#imgId=self.images[1]
-			#imgId=self.images[3456]
-			imgId=self.images[random.randint(0, len(self.images)-1)]
-	  
-			instances = self.coco.loadAnns(self.coco.getAnnIds(imgId, iscrowd=False))
-		
-			#Ignore crowd images
-			crowd = self.coco.loadAnns(self.coco.getAnnIds(imgId, iscrowd=True))
-			if len(crowd)>0:
-				continue;
+        return res
 
-			imgFile=self.path+"/"+self.set+"/"+self.coco.loadImgs(imgId)[0]["file_name"]
-			img = cv2.imread(imgFile)
+    def load(self):
+        while True:
+            # imgId=self.images[1]
+            # imgId=self.images[3456]
+            imgId = self.images[random.randint(0, len(self.images) - 1)]
 
-			if img is None:
-				print("ERROR: Failed to load "+imgFile)
-				continue
+            instances = self.coco.loadAnns(self.coco.getAnnIds(imgId, iscrowd=False))
 
-			sizeMul = 1.0
-			padTop = 0
-			padLeft = 0
+            # Ignore crowd images
+            crowd = self.coco.loadAnns(self.coco.getAnnIds(imgId, iscrowd=True))
+            if len(crowd) > 0:
+                continue;
 
-			if len(instances)<=0:
-				continue
+            imgFile = self.path + "/" + self.set + "/" + self.coco.loadImgs(imgId)[0]["file_name"]
+            img = cv2.imread(imgFile)
 
-			iBoxes=[{
-						"x":int(i["bbox"][0]),
-						"y":int(i["bbox"][1]),
-						"w":int(i["bbox"][2]),
-						"h":int(i["bbox"][3])
-					} for i in instances]
-	
-			if self.randomZoom:
-				img, iBoxes = BoxAwareRandZoom.randZoom(img, iBoxes, keepOriginalRatio=False, keepOriginalSize=False, keepBoxes=True)
+            if img is None:
+                print("ERROR: Failed to load " + imgFile)
+                continue
 
-			if self.normalizeSize:
-				sizeMul = 640.0 / min(img.shape[0], img.shape[1])
-				img = cv2.resize(img, (int(img.shape[1]*sizeMul), int(img.shape[0]*sizeMul)))
+            sizeMul = 1.0
+            padTop = 0
+            padLeft = 0
 
-			m = img.shape[1] % 32
-			if m != 0:
-				padLeft = int(m/2)
-				img = img[:,padLeft : padLeft + img.shape[1] - m]
+            if len(instances) <= 0:
+                continue
 
-			m = img.shape[0] % 32
-			if m != 0:
-				m = img.shape[0] % 32
-				padTop = int(m/2)
-				img = img[padTop : padTop + img.shape[0] - m]
+            iBoxes = [{
+                "x": int(i["bbox"][0]),
+                "y": int(i["bbox"][1]),
+                "w": int(i["bbox"][2]),
+                "h": int(i["bbox"][3])
+            } for i in instances]
 
-			if img.shape[0]<256 or img.shape[1]<256:
-				print("Warning: Image to small, skipping: "+str(img.shape))
-				continue
+            if self.randomZoom:
+                img, iBoxes = BoxAwareRandZoom.randZoom(img, iBoxes, keepOriginalRatio=False, keepOriginalSize=False,
+                                                        keepBoxes=True)
 
-			boxes=[]
-			categories=[]
-			for i in range(len(instances)):
-				x1,y1,w,h = iBoxes[i]["x"],iBoxes[i]["y"],iBoxes[i]["w"],iBoxes[i]["h"]
-				newBox=[int(x1*sizeMul) - padLeft, int(y1*sizeMul) - padTop, int((x1+w)*sizeMul) - padLeft, int((y1+h)*sizeMul) - padTop]
-				newBox[0] = max(min(newBox[0], img.shape[1]),0)
-				newBox[1] = max(min(newBox[1], img.shape[0]),0)
-				newBox[2] = max(min(newBox[2], img.shape[1]),0)
-				newBox[3] = max(min(newBox[3], img.shape[0]),0)
+            if self.normalizeSize:
+                sizeMul = 640.0 / min(img.shape[0], img.shape[1])
+                img = cv2.resize(img, (int(img.shape[1] * sizeMul), int(img.shape[0] * sizeMul)))
 
-				if (newBox[2]-newBox[0]) >= 16 and (newBox[3]-newBox[1]) >= 16:
-					boxes.append(newBox)
-					categories.append(self.fromCocoCategory[instances[i]["category_id"]])
+            m = img.shape[1] % 32
+            if m != 0:
+                padLeft = int(m / 2)
+                img = img[:, padLeft: padLeft + img.shape[1] - m]
 
-			if len(boxes)==0:
-				print("Warning: No boxes on image. Skipping.")
-				continue;
+            m = img.shape[0] % 32
+            if m != 0:
+                m = img.shape[0] % 32
+                padTop = int(m / 2)
+                img = img[padTop: padTop + img.shape[0] - m]
 
-			boxes=np.array(boxes, dtype=np.float32)
-			boxes=np.reshape(boxes, [-1,4])
-			categories=np.array(categories, dtype=np.uint8)
+            if img.shape[0] < 256 or img.shape[1] < 256:
+                print("Warning: Image to small, skipping: " + str(img.shape))
+                continue
 
-			return img, boxes, categories
+            boxes = []
+            categories = []
+            for i in range(len(instances)):
+                x1, y1, w, h = iBoxes[i]["x"], iBoxes[i]["y"], iBoxes[i]["w"], iBoxes[i]["h"]
+                newBox = [int(x1 * sizeMul) - padLeft, int(y1 * sizeMul) - padTop, int((x1 + w) * sizeMul) - padLeft,
+                          int((y1 + h) * sizeMul) - padTop]
+                newBox[0] = max(min(newBox[0], img.shape[1]), 0)
+                newBox[1] = max(min(newBox[1], img.shape[0]), 0)
+                newBox[2] = max(min(newBox[2], img.shape[1]), 0)
+                newBox[3] = max(min(newBox[3], img.shape[0]), 0)
 
-	def count(self):
-		return len(self.images)
+                if (newBox[2] - newBox[0]) >= 16 and (newBox[3] - newBox[1]) >= 16:
+                    boxes.append(newBox)
+                    categories.append(self.fromCocoCategory[instances[i]["category_id"]])
+
+            if len(boxes) == 0:
+                print("Warning: No boxes on image. Skipping.")
+                continue;
+
+            boxes = np.array(boxes, dtype=np.float32)
+            boxes = np.reshape(boxes, [-1, 4])
+            categories = np.array(categories, dtype=np.uint8)
+
+            return img, boxes, categories
+
+    def count(self):
+        return len(self.images)

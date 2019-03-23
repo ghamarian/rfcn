@@ -1,3 +1,4 @@
+USE_GPU=0
 CUDA_HOME?=$(shell dirname `dirname \`which nvcc\``)
 CUDA_INC := ${CUDA_HOME}/include
 NVCC := ${CUDA_HOME}/bin/nvcc
