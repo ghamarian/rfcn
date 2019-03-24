@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/amir/.pyenv/shims/python
 #
 # Copyright 2017 Robert Csordas. All Rights Reserved.
 #
@@ -25,13 +25,14 @@ from BoxInceptionResnet import BoxInceptionResnet
 from Visualize import Visualize
 from Utils import CheckpointLoader
 from Utils import PreviewIO
+import sys
 
 parser = argparse.ArgumentParser(description="RFCN tester")
 parser.add_argument('-gpu', type=str, default="0", help='Train on this GPU(s)')
 parser.add_argument('-n', type=str, help='Network checkpoint file')
 parser.add_argument('-i', type=str, help='Input file.')
 parser.add_argument('-o', type=str, default="", help='Write output here.')
-parser.add_argument('-p', type=int, default=1, help='Show preview')
+parser.add_argument('-p', type=int, default=0, help='Show preview')
 parser.add_argument('-threshold', type=float, default=0.5, help='Detection threshold')
 parser.add_argument('-delay', type=int, default=-1,
                     help='Delay between frames in visualization. -1 for automatic, 0 for wait for keypress.')

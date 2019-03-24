@@ -24,7 +24,13 @@ import Utils.MultiGather as MultiGather
 
 
 class RPN:
-    def __init__(self, input, anchors=None, immediateSize=512, weightDecay=1e-5, inputDownscale=16, offset=[32, 32]):
+    def __init__(self,
+                 input,
+                 anchors=None,
+                 immediateSize=512,
+                 weightDecay=1e-5,
+                 inputDownscale=16,
+                 offset=[32, 32]):
         self.input = input
         self.anchors = anchors
         self.inputDownscale = inputDownscale

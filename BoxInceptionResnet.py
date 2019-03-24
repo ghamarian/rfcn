@@ -41,7 +41,7 @@ class BoxInceptionResnet(BoxNetwork):
         if isinstance(trainFrom, int):
             trainFrom = self.LAYER_NAMES[trainFrom]
 
-        print("Training network from " + (trainFrom if trainFrom is not None else "end"))
+        print(f"Training network from {(trainFrom if trainFrom is not None else 'end')}")
 
         with tf.variable_scope(name, reuse=reuse) as scope:
             self.googleNet = InceptionResnetV2("features", inputs, trainFrom=trainFrom, freezeBatchNorm=freezeBatchNorm)
